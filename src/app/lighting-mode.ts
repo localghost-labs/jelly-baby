@@ -1,7 +1,10 @@
 import * as THREE from 'three/webgpu';
-import { loadEnvironment } from '../graphics/scene/environment.ts';
+import type { Environment } from '../graphics/scene/environment.ts';
 
-type Environment=Awaited<ReturnType<typeof loadEnvironment>>;
+// Re-exported so the runtime's one dynamic import of this module brings the
+// night map with it: the switch and its second environment travel together.
+export { loadNightEnvironment } from '../graphics/scene/night-environment.ts';
+
 type Prepare=(light:Environment,signal:AbortSignal)=>void|Promise<void>;
 
 /** Prepares every derived lighting resource offscreen, then commits one visible frame. */

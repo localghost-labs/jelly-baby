@@ -9,6 +9,7 @@ import { measureWindow } from '../src/graphics/scene/environment-measure.ts';
 import { STUDIO_ENVIRONMENT } from '../src/graphics/scene/studio-environment.generated.ts';
 import { NIGHT_ENVIRONMENT } from '../src/graphics/scene/night-environment.generated.ts';
 import { shapeStudioLight } from '../src/graphics/scene/studio-light.ts';
+import { downsampleEnvironment } from '../src/graphics/scene/environment-resample.ts';
 import { FacilityShadows } from '../src/facilities/shadows.ts';
 import { LightingMode } from '../src/app/lighting-mode.ts';
 
@@ -17,10 +18,14 @@ const dayBytes=readFileSync(new URL('../dev-assets/environment/bg_room.exr',impo
 const daySource=new EXRLoader().setDataType(THREE.HalfFloatType).parse(dayBytes.buffer.slice(dayBytes.byteOffset,dayBytes.byteOffset+dayBytes.byteLength));
 const originalDay=measureWindow(daySource);
 const shapedDay=shapeStudioLight(daySource,originalDay.incoming.clone().negate());
+// The shipped studio map is the relit HDR at half resolution (build-studio-environment.mjs);
+// its lighting metadata is still measured at full resolution.
+const shippedDay=downsampleEnvironment(shapedDay,2);
 const runtimeDay=readFileSync(new URL('../src/assets/bg_room_studio.rgba16f',import.meta.url));
-assert.equal(runtimeDay.length,shapedDay.data.byteLength,'generated studio map keeps the exact RGBA16F dimensions');
-assert(runtimeDay.equals(Buffer.from(shapedDay.data.buffer,shapedDay.data.byteOffset,shapedDay.data.byteLength)),
-  'generated runtime studio map must exactly match the authored HDR relighting pass');
+assert.equal(runtimeDay.length,shippedDay.data.byteLength,'generated studio map keeps the exact half-resolution RGBA16F dimensions');
+assert(runtimeDay.equals(Buffer.from(shippedDay.data.buffer,shippedDay.data.byteOffset,shippedDay.data.byteLength)),
+  'generated runtime studio map must exactly match the authored HDR relighting pass, resampled');
+assert.equal(STUDIO_ENVIRONMENT.width,shippedDay.width);assert.equal(STUDIO_ENVIRONMENT.height,shippedDay.height);
 const measuredDay=measureWindow(shapedDay);
 const close=(actual,expected,label)=>assert(Math.abs(actual-expected)<1e-12,`${label} metadata is stale`);
 for(let i=0;i<3;i++) {

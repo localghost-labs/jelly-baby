@@ -5,6 +5,7 @@ import * as THREE from 'three/webgpu';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { measureWindow } from '../src/graphics/scene/environment-measure.ts';
 import { shapeStudioLight } from '../src/graphics/scene/studio-light.ts';
+import { downsampleEnvironment } from '../src/graphics/scene/environment-resample.ts';
 
 const loader=new EXRLoader().setDataType(THREE.HalfFloatType);
 
@@ -13,13 +14,17 @@ function decode(url) {
   return loader.parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
 }
 
-function writeEnvironment(sourceURL,rawURL,metadataURL,name,upperPeakOnly=false,shape=false) {
+function writeEnvironment(sourceURL,rawURL,metadataURL,name,upperPeakOnly=false,shape=false,downsample=1) {
   const source=decode(sourceURL);
   const image=shape ? shapeStudioLight(source,measureWindow(source).incoming.clone().negate()) : source;
+  // Lighting is measured on the full-resolution image; only the shipped pixels
+  // are resampled. Direction, colour and irradiance drive shadows and caustics
+  // and deserve the precision; the map itself is PMREM-filtered at runtime.
   const lighting=measureWindow(image,upperPeakOnly);
-  writeFileSync(rawURL,Buffer.from(image.data.buffer,image.data.byteOffset,image.data.byteLength));
+  const shipped=downsampleEnvironment(image,downsample);
+  writeFileSync(rawURL,Buffer.from(shipped.data.buffer,shipped.data.byteOffset,shipped.data.byteLength));
   const values={
-    width:image.width,height:image.height,
+    width:shipped.width,height:shipped.height,
     incoming:lighting.incoming.toArray(),color:lighting.color.toArray(),sourceSpread:lighting.sourceSpread.toArray(),
     windowFraction:lighting.windowFraction,irradiance:lighting.irradiance,
   };
@@ -32,7 +37,10 @@ writeEnvironment(
   new URL('../dev-assets/environment/bg_room.exr',import.meta.url),
   new URL('../src/assets/bg_room_studio.rgba16f',import.meta.url),
   new URL('../src/graphics/scene/studio-environment.generated.ts',import.meta.url),
-  'STUDIO_ENVIRONMENT',false,true,
+  // Shipped at half resolution (512×256): the studio map is on every page's
+  // first-visit path, including the Smashbar embed's 10 MB budget, and PMREM
+  // filtering leaves nothing of the extra detail in the reflections.
+  'STUDIO_ENVIRONMENT',false,true,2,
 );
 writeEnvironment(
   new URL('../dev-assets/environment/night.exr',import.meta.url),
