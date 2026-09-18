@@ -41,7 +41,12 @@ export function drawingBufferDpr(width:number,height:number,devicePixelRatio:num
   return Number.isFinite(dpr)&&dpr>0?dpr:1;
 }
 
-export function resizeView(renderer:THREE.WebGPURenderer,camera:THREE.PerspectiveCamera,controls:OrbitControls,maxDpr=1.7) {
+/**
+ * `narrowViewportOffset` is the phone framing: viewports under 700 px push the
+ * camera further down. A scene embedded in a portrait panel keeps the desktop
+ * framing at every width so it matches the still it cross-fades from.
+ */
+export function resizeView(renderer:THREE.WebGPURenderer,camera:THREE.PerspectiveCamera,controls:OrbitControls,maxDpr=1.7,narrowViewportOffset=true) {
   if(window.innerWidth<=0||window.innerHeight<=0)return;
   const width=Math.max(1,window.innerWidth),height=Math.max(1,window.innerHeight);
   renderer.setDrawingBufferSize(width,height,drawingBufferDpr(width,height,window.devicePixelRatio,maxDpr));
@@ -49,6 +54,6 @@ export function resizeView(renderer:THREE.WebGPURenderer,camera:THREE.Perspectiv
   camera.fov=2*Math.atan(Math.tan(18*Math.PI/180)*Math.max(1,.85/camera.aspect))*180/Math.PI;
   // Every visible ray meets the tabletop. The horizon never enters the frame.
   controls.maxPolarAngle=Math.PI/2-THREE.MathUtils.degToRad(camera.fov)/2-.10;
-  camera.setViewOffset(width,height,0,height*(width<700?.075:.025),width,height);
+  camera.setViewOffset(width,height,0,height*(narrowViewportOffset&&width<700?.075:.025),width,height);
   camera.updateProjectionMatrix();controls.update();
 }

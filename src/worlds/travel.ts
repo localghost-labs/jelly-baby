@@ -20,8 +20,9 @@ export class WorldTravel {
   readonly soccerFacilities:Facilities;
   readonly menu:DestinationMenu;
   readonly toyFacilities:Facilities;
-  readonly homePortal=new JellyPortal(HOME_PORTAL.x,HOME_PORTAL.z);
-  readonly homePortalFacility:PortalFacility;
+  /** Absent when the scene is configured without worlds (`portal=false`): the character alone on its ground. */
+  readonly homePortal:JellyPortal|undefined;
+  readonly homePortalFacility:PortalFacility|undefined;
   private returnPortal:JellyPortal|undefined;
   private returnPortalFacility:PortalFacility|undefined;
   tricycle:TricycleFacility|undefined;
@@ -48,20 +49,26 @@ export class WorldTravel {
   onMove:()=>void=()=>{};
   onMenuOpen:()=>void=()=>{};
   onReady:()=>void|Promise<void>=()=>{};
-  constructor(scene:Scene,body:SoftBody,shadows:FacilityShadows,homeFacilities:Facilities,renderer:WebGPURenderer,camera:PerspectiveCamera,stage:(s:string)=>void,fail:(e:unknown)=>void,cameraOnlyOpticalHz=30) {
+  constructor(scene:Scene,body:SoftBody,shadows:FacilityShadows,homeFacilities:Facilities,renderer:WebGPURenderer,camera:PerspectiveCamera,stage:(s:string)=>void,fail:(e:unknown)=>void,cameraOnlyOpticalHz=30,portal=true) {
     this.scene=scene;this.body=body;this.shadows=shadows;this.homeFacilities=homeFacilities;this.renderer=renderer;this.camera=camera;this.stage=stage;this.fail=fail;
     this.cameraOnlyOpticalHz=cameraOnlyOpticalHz;
     this.toyFacilities=new Facilities(body);this.toyFacilities.enabled=false;
     this.soccerFacilities=new Facilities(body);this.soccerFacilities.enabled=false;
     this.menu=new DestinationMenu(id=>{if(id===this.current){this.onMenuClose();return;}void this.travel(id).catch(this.fail);},()=>this.onMenuClose());
-    this.homePortalFacility=new PortalFacility(body,'home-portal-housing',HOME_PORTAL.x,HOME_PORTAL.z,this.homePortal.collisionBoxes,()=>this.requestTravel(),()=>this.portalAvailable());
-    this.homeFacilities.add(this.homePortalFacility);
-    this.home.add(this.homePortal.group);this.toys.visible=this.soccerWorld.visible=false;scene.add(this.home,this.toys,this.soccerWorld);
-    this.shadows.add(this.homePortal.group,this.homePortal.lightingEnvelope);
+    if(portal) {
+      // The portal is the only way out of the home world, so a scene without
+      // it never constructs the tricycle or soccer worlds either.
+      this.homePortal=new JellyPortal(HOME_PORTAL.x,HOME_PORTAL.z);
+      this.homePortalFacility=new PortalFacility(body,'home-portal-housing',HOME_PORTAL.x,HOME_PORTAL.z,this.homePortal.collisionBoxes,()=>this.requestTravel(),()=>this.portalAvailable());
+      this.homeFacilities.add(this.homePortalFacility);
+      this.home.add(this.homePortal.group);
+      this.shadows.add(this.homePortal.group,this.homePortal.lightingEnvelope);
+    }
+    this.toys.visible=this.soccerWorld.visible=false;scene.add(this.home,this.toys,this.soccerWorld);
   }
   get facilities(){return this.inSoccer?this.soccerFacilities:this.inToys?this.toyFacilities:this.homeFacilities;}
-  /** The active world's portal is a normal facility candidate for E/touch. */
-  get portalFacility():PortalFacility {return this.inSoccer?this.soccerPortalFacility!:this.inToys?this.returnPortalFacility!:this.homePortalFacility;}
+  /** The active world's portal is a normal facility candidate for E/touch; undefined in a scene without worlds. */
+  get portalFacility():PortalFacility|undefined {return this.inSoccer?this.soccerPortalFacility:this.inToys?this.returnPortalFacility:this.homePortalFacility;}
   reset() {
     this.menu.hide();this.onMenuClose();
     const portal=this.inSoccer?SOCCER_PORTAL:TRACK_PORTAL;
@@ -164,5 +171,5 @@ export class WorldTravel {
     if(this.disposed)return;
     document.querySelector('#loading')!.classList.add('hidden');this.loading=false;
   }
-  dispose(){this.disposed=true;this.menu.dispose();this.toyFacilities.dispose();this.soccerFacilities.dispose();this.homePortal.dispose();this.returnPortal?.dispose();this.soccerPortal?.dispose();this.home.removeFromParent();this.toys.removeFromParent();this.soccerWorld.removeFromParent();}
+  dispose(){this.disposed=true;this.menu.dispose();this.toyFacilities.dispose();this.soccerFacilities.dispose();this.homePortal?.dispose();this.returnPortal?.dispose();this.soccerPortal?.dispose();this.home.removeFromParent();this.toys.removeFromParent();this.soccerWorld.removeFromParent();}
 }

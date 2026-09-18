@@ -37,6 +37,10 @@ function runtimeModulePreload() {
 
 export default defineConfig({
   plugins:[runtimeModulePreload()],
+  build: {
+    // scripts/check-embed-budget.mjs walks the import graph from this manifest.
+    manifest: true
+  },
   server: {
     allowedHosts: true
   }

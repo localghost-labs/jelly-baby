@@ -1,9 +1,7 @@
 import * as THREE from 'three/webgpu';
-import { NIGHT_ENVIRONMENT } from './night-environment.generated.ts';
 import { STUDIO_ENVIRONMENT } from './studio-environment.generated.ts';
 
-
-type BakedEnvironmentMetadata={
+export type BakedEnvironmentMetadata={
   readonly width:number;
   readonly height:number;
   readonly incoming:readonly [number,number,number];
@@ -13,7 +11,14 @@ type BakedEnvironmentMetadata={
   readonly irradiance:number;
 };
 
-async function loadBakedEnvironment(url:URL,metadata:BakedEnvironmentMetadata,label:string) {
+export type BakedEnvironmentOptions={
+  /** `scene.environmentIntensity` once applied. The studio's .9 is the reference the irradiance was measured at. */
+  readonly intensity:number;
+  /** Apply to the scene as soon as it is ready (the day map) or hold until `apply()` (the night map). */
+  readonly applyNow:boolean;
+};
+
+async function fetchBakedEnvironment(url:URL,metadata:BakedEnvironmentMetadata,label:string) {
   const response=await fetch(url);
   if(!response.ok)throw new Error(`Could not load the ${label} environment (${response.status})`);
   const bytes=await response.arrayBuffer(),expected=metadata.width*metadata.height*4*2;
@@ -31,19 +36,28 @@ async function loadBakedEnvironment(url:URL,metadata:BakedEnvironmentMetadata,la
   };
 }
 
-export async function loadEnvironment(renderer:THREE.WebGPURenderer,scene:THREE.Scene,night=false) {
-  const metadata=night?NIGHT_ENVIRONMENT:STUDIO_ENVIRONMENT;
-  const url=night
-    ? new URL('../../assets/night.rgba16f',import.meta.url)
-    : new URL('../../assets/bg_room_studio.rgba16f',import.meta.url);
-  const {source,lighting}=await loadBakedEnvironment(url,metadata,night?'night':'studio');
+/**
+ * One prebaked RGBA16F equirectangular map, PMREM-filtered for the scene. Each
+ * map's URL lives in its own module (this one for the studio, night-environment.ts
+ * for night) so a scene that never switches lighting never references the night
+ * bytes — the bundler then keeps them out of that scene's transfer.
+ */
+export async function loadBakedEnvironment(renderer:THREE.WebGPURenderer,scene:THREE.Scene,url:URL,metadata:BakedEnvironmentMetadata,label:string,options:BakedEnvironmentOptions) {
+  const {source,lighting}=await fetchBakedEnvironment(url,metadata,label);
   source.mapping=THREE.EquirectangularReflectionMapping;
   source.colorSpace=THREE.LinearSRGBColorSpace;
-  const intensity=night?.45:.9;
+  const {intensity}=options;
   lighting.irradiance*=intensity/.9;
   const pmrem=new THREE.PMREMGenerator(renderer);
   const target=pmrem.fromEquirectangular(source);pmrem.dispose();
   const apply=()=>{scene.environment=target.texture;scene.environmentIntensity=intensity;};
-  if(!night)apply();
+  if(options.applyNow)apply();
   return {...lighting,intensity,reflectionTexture:source,apply,dispose:()=>{target.dispose();source.dispose();}};
+}
+
+export type Environment=Awaited<ReturnType<typeof loadBakedEnvironment>>;
+
+/** The studio (day) map, applied to the scene as soon as it is ready. */
+export function loadEnvironment(renderer:THREE.WebGPURenderer,scene:THREE.Scene) {
+  return loadBakedEnvironment(renderer,scene,new URL('../../assets/bg_room_studio.rgba16f',import.meta.url),STUDIO_ENVIRONMENT,'studio',{intensity:.9,applyNow:true});
 }

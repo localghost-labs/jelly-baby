@@ -39,6 +39,7 @@
     "test:performance": "node --experimental-strip-types scripts/verify-performance.mjs",
     "benchmark": "node --experimental-strip-types scripts/benchmark.mjs",
     "build": "node scripts/ensure-built-assets.mjs && tsc && vite build",
+    "check:embed-budget": "node scripts/check-embed-budget.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
