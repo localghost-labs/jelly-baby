@@ -26,6 +26,7 @@ import { LocalReflectionProbe } from '../graphics/scene/local-reflections.ts';
 import { startupPlatformProfile } from './platform-profile.ts';
 import { resolveSceneConfig, type SceneConfig } from './scene-config.ts';
 import { IdleHop } from './idle-hop.ts';
+import { installCapture } from './capture.ts';
 
 export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,config:SceneConfig=resolveSceneConfig()) {
   const profile=startupPlatformProfile();
@@ -185,13 +186,13 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const backend=renderer.backend as unknown as {device:GPUDevice};
   await backend.device.queue.onSubmittedWorkDone();
   lastTime=performance.now();
-  const frame=(time:number)=>{
-    if(disposed)return;
-    try {
-      const dt=Math.min(.05,Math.max(0,(time-lastTime)/1000));lastTime=time;
-      if(document.hidden){physicsClock.reset();return;}
-      if(lightingMode?.switching){physicsClock.reset();return;}
-      if(worlds.loading||worlds.menu.opened){physicsClock.reset();return;}
+  /**
+   * One slice of world time and every per-frame scene update, up to but not
+   * including the draw. Returns the optical transport's refresh — the live loop
+   * lets it run alongside the next frames, the offline renderer awaits it — or
+   * nothing while a world is loading, when there is no frame to draw.
+   */
+  const advanceScene=(dt:number):Promise<void>|undefined=>{
       idleHop?.step(dt);
       const steps=physicsClock.advance(dt,()=>{
         if(worlds.loading)return;
@@ -208,7 +209,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
         if(!body.isFinite())throw new Error('The soft-body simulation produced an invalid state');
         body.updateSurface();
       }
-      if(worlds.loading)return;
+      if(worlds.loading)return undefined;
       worlds.facilities.update();worlds.update(dt);
       baby.update(dt,worlds.facilities.active?.laughing??false,worlds.facilities.active?.sleeping??false,worlds.facilities.crying);
       const shadowSyncRevision=facilityShadows.update(renderer);
@@ -223,7 +224,18 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       optics.update(renderer,body);
       ground.mesh.position.x=body.center.x;ground.mesh.position.z=body.center.z;
       localReflections.update(renderer,body.center);
-      void transport.update().catch(fail);
+      return transport.update();
+  };
+  const frame=(time:number)=>{
+    if(disposed)return;
+    try {
+      const dt=Math.min(.05,Math.max(0,(time-lastTime)/1000));lastTime=time;
+      if(document.hidden){physicsClock.reset();return;}
+      if(lightingMode?.switching){physicsClock.reset();return;}
+      if(worlds.loading||worlds.menu.opened){physicsClock.reset();return;}
+      const refresh=advanceScene(dt);
+      if(!refresh)return;
+      void refresh.catch(fail);
       composite.render();
     }catch(error){fail(error);}
   };
@@ -238,7 +250,8 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       physicsClock.reset();lastTime=performance.now();void renderer.setAnimationLoop(frame);
     },{signal:lifecycle.signal});
   }
-  await renderer.setAnimationLoop(frame);
+  if(config.capture)installCapture({renderer,scene,camera,baby,composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
+  else await renderer.setAnimationLoop(frame);
   const dispose=()=>{
     if(disposed)return;disposed=true;
     lifecycle.abort();idleHop?.dispose();lightingMode?.dispose();void renderer.setAnimationLoop(null);input.dispose();sound.dispose();transport.dispose();resizeObserver.disconnect();cancelAnimationFrame(resizeFrame);

@@ -44,6 +44,7 @@ export class Baby {
     this.face.setPalette(look.face??DEFAULT_FACE);
   }
   update(dt=0,playing=false,sleeping=false,crying=false) { this.face.update(dt,playing,sleeping,crying); }
+  get blink(){return this.face.blink;}
   resetFace() { this.face.reset(); }
   dispose() {
     this.group.traverse(object=>{

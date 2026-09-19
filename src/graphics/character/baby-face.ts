@@ -55,6 +55,8 @@ export class BabyFace {
     const lip=new THREE.Shape();lip.absellipse(0,0,.0024,.00125,0,Math.PI*2,false,0);
     add(refinePatch(new THREE.ShapeGeometry(lip,24)),tongue,0,.0368,.00028,'tongue');
   }
+  /** 0 open, 1 shut — the offline renderer picks its loop points where this is 0. */
+  get blink(){return this.expression.blink;}
   /** Recolour the ink for a flavor; geometry and expression are untouched. */
   setPalette(palette:FacePalette) {
     for(const feature of ['eye','mouth','tongue','blush'] as const)this.ink[feature].color.set(palette[feature]);

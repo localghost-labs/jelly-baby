@@ -64,6 +64,8 @@ export type SceneConfig={
   /** Shift the camera further down on viewports under 700 px (the phone framing). */
   readonly narrowViewportOffset:boolean;
   readonly canvasLabel:string;
+  /** Offline rendering: no animation loop; a driver steps the scene through `window.__jellyCapture` (src/app/capture.ts). */
+  readonly capture:boolean;
 };
 
 export const FULL_SCENE:SceneConfig={
@@ -80,6 +82,7 @@ export const FULL_SCENE:SceneConfig={
   lifecycleMessages:false,
   pauseWhenHidden:false,
   narrowViewportOffset:true,
+  capture:false,
   canvasLabel:'Jelly baby. Use the touch joystick or WASD to walk, Space to jump. Press E or use the Play button near a facility; use the same action to get off. Drag the baby to stretch; drag the table to orbit.',
 };
 
@@ -120,7 +123,22 @@ export const EMBED_SCENE:SceneConfig={
   // on a small laptop. Its poster was captured with the desktop framing; the
   // live scene must keep it so the cross-fade does not read as a jump.
   narrowViewportOffset:false,
+  capture:false,
   canvasLabel:'Smashbar jelly. Click the scene, then use WASD or the arrow keys to wander and Space to hop. Drag the jelly to stretch it; drag the ground to orbit.',
+};
+
+/**
+ * The Smashbar scene rendered offline for the landing page's video loops: the
+ * same look, but nothing moves on its own, nothing announces itself and there
+ * is no chrome in the way of the canvas.
+ */
+export const CAPTURE_SCENE:SceneConfig={
+  ...EMBED_SCENE,
+  idleHop:null,
+  lifecycleMessages:false,
+  pauseWhenHidden:false,
+  chrome:{...EMBED_SCENE.chrome,mute:false},
+  capture:true,
 };
 
 /** `?embed=1` selects the Smashbar backdrop; anything else is the playroom. */
@@ -129,5 +147,6 @@ export function isEmbedSearch(search:string) {
 }
 
 export function resolveSceneConfig(search:string=location.search):SceneConfig {
-  return isEmbedSearch(search)?EMBED_SCENE:FULL_SCENE;
+  if(!isEmbedSearch(search))return FULL_SCENE;
+  return new URLSearchParams(search).get('capture')==='1'?CAPTURE_SCENE:EMBED_SCENE;
 }
