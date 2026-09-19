@@ -19,8 +19,10 @@ export type Stain={
   dispose():void;
 };
 
-/** Just above the ground plane; the polygon offset keeps the two from fighting. */
-const HEIGHT=.0002;
+/** A hair above the ground plane; the polygon offset keeps the two from fighting. */
+const HEIGHT=.00005;
+/** After the ground, before the character (renderOrder 1): his base always covers the ink. */
+const RENDER_ORDER=.5;
 
 /**
  * Smashbar's smush mark as a flat ink stain on the ground where the character
@@ -39,7 +41,9 @@ export async function loadStain(options:StainOptions,light:{windowFraction:numbe
     const fill=String((path.userData?.style as {fill?:string}|undefined)?.fill??'#7f56d9');
     let material=materials.get(fill);
     if(!material) {
-      material=new THREE.MeshPhysicalNodeMaterial({color:fill,metalness:0,roughness:.55,clearcoat:.15,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+      // A decal: no depth of its own, so a squashed base that dips into the
+      // plane is drawn over it instead of fighting with it.
+      material=new THREE.MeshPhysicalNodeMaterial({color:fill,metalness:0,roughness:.55,clearcoat:.15,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
       materials.set(fill,material);
     }
     const tint=new THREE.Color(fill);
@@ -47,7 +51,7 @@ export async function loadStain(options:StainOptions,light:{windowFraction:numbe
       bounds.union(new THREE.Box2().setFromPoints(shape.getPoints(8)));
       const geometry=new THREE.ShapeGeometry(shape,12);geometries.push(geometry);
       const mesh=new THREE.Mesh(geometry,material);
-      mesh.receiveCaustics=true;mesh.frustumCulled=false;
+      mesh.receiveCaustics=true;mesh.frustumCulled=false;mesh.renderOrder=RENDER_ORDER;
       caustics.registerGround(mesh,vec3(tint.r,tint.g,tint.b),facilities,fraction,HEIGHT);
       glyph.add(mesh);
     }
