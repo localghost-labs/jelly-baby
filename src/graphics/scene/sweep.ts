@@ -15,11 +15,16 @@ export type GroundSurface={mesh:THREE.Mesh;setLighting(light:{windowFraction:num
  * receiver path. No textures, so a scene that stands on it never fetches the
  * wood.
  */
-export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string):GroundSurface {
+export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string,lift=0):GroundSurface {
   const fraction=uniform(light.windowFraction);
   const tint=new THREE.Color(color);
   const albedo=vec3(tint.r,tint.g,tint.b);
   const material=new THREE.MeshPhysicalNodeMaterial({color,metalness:0,roughness:.72,clearcoat:0});
+  // `lift` re-adds the sweep colour as emission so a bright cyclorama reads as
+  // bright after tonemapping; shadows and caustics still modulate the lit term.
+  // It must be the NODE: the caustic receiver extends `emissiveNode`, and a
+  // node there supersedes the plain `emissive` property entirely.
+  if(lift>0)material.emissiveNode=albedo.mul(lift);
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(200,200),material);
   mesh.rotation.x=-Math.PI/2;mesh.position.y=-.00005;mesh.receiveCaustics=true;
   caustics.registerGround(mesh,albedo,facilities,fraction);

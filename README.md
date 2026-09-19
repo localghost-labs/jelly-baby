@@ -38,7 +38,7 @@ selected at runtime by `?embed=1` and configured in one place,
 before. Nothing upstream is deleted or hidden to get there — the runtime
 constructs only what the scene names.
 
-Embed mode: grape jelly alone on a lavender sweep; no furniture, no portal, no other worlds; the mute button, the
+Embed mode: grape jelly alone on a white sweep; no furniture, no portal, no other worlds; the mute button, the
 keyboard hints and a `source` link for chrome; a loading card in Smashbar
 colours with self-hosted Inter (`public/fonts`, SIL OFL). It is desktop-only by
 the embedder's choice, so there are no touch controls.

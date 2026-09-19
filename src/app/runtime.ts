@@ -73,7 +73,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const table=await tableModule;
   const ground:GroundSurface=table&&tableTextures
     ?table.makeTable(optics,environment,facilityShadows,caustics,tableTextures)
-    :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop);
+    :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop,config.ground.kind==='sweep'?config.ground.lift:0);
   scene.add(ground.mesh);
   if(wordmark)scene.add(wordmark.group);
   const composite=createComposite(renderer,scene,camera,profile.bloomResolutionScale);

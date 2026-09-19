@@ -5,8 +5,12 @@ export const SOURCE_URL='https://github.com/localghost-labs/jelly-baby';
 
 export type GroundConfig=
   |{readonly kind:'table'}
-  /** A flat matte plane in one colour; with the backdrop set to the same colour the horizon disappears. */
-  |{readonly kind:'sweep';readonly color:string};
+  /**
+   * A flat matte plane in one colour; with the backdrop set to the same colour
+   * the horizon disappears. `lift` adds the colour back as emission (0–1): a lit
+   * white plane tonemaps to light grey, and this is what makes it read white.
+   */
+  |{readonly kind:'sweep';readonly color:string;readonly lift?:number};
 
 export type WordmarkConfig={
   /** Metres across the letters. The baby is ~7 cm. */
@@ -71,18 +75,18 @@ export const FULL_SCENE:SceneConfig={
   canvasLabel:'Jelly baby. Use the touch joystick or WASD to walk, Space to jump. Press E or use the Play button near a facility; use the same action to get off. Drag the baby to stretch; drag the table to orbit.',
 };
 
-/** Smashbar brand lavender (brand-200) — the sweep, the backdrop and the loading card share it. */
-const SMASHBAR_LAVENDER='#e9d7fe';
+/** The sweep, the backdrop and the loading card share one colour: a white cyclorama (Dustin, 2026-09-19; was brand lavender #e9d7fe). */
+const SMASHBAR_SWEEP='#ffffff';
 
 /**
- * The Smashbar auth-page backdrop: grape jelly alone on a lavender sweep, no
+ * The Smashbar auth-page backdrop: grape jelly alone on a white sweep, no
  * playroom, no worlds, only the mute button and the keyboard hints for chrome. Desktop only by the embedder's choice, so no touch controls.
  */
 export const EMBED_SCENE:SceneConfig={
   mode:'embed',
   flavor:'grape',
-  backdrop:SMASHBAR_LAVENDER,
-  ground:{kind:'sweep',color:SMASHBAR_LAVENDER},
+  backdrop:SMASHBAR_SWEEP,
+  ground:{kind:'sweep',color:SMASHBAR_SWEEP,lift:1},
   playroom:false,
   portal:false,
   // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The
