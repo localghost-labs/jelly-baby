@@ -6,6 +6,8 @@ export type CaptureDependencies={
   readonly scene:THREE.Scene;
   readonly camera:THREE.PerspectiveCamera;
   readonly baby:Baby;
+  /** Everything that is "him" for the cutout: the character, and the ink he stands in. */
+  readonly cutout:readonly THREE.Object3D[];
   readonly composite:{render():void};
   /** One fixed simulation step plus every per-frame scene update, optical refresh awaited. */
   readonly advance:(dt:number)=>Promise<void>;
@@ -45,7 +47,7 @@ export function installCapture(d:CaptureDependencies) {
   const matteScene=new THREE.Scene();matteScene.background=new THREE.Color('#000000');
   const swapMaterials=(material:THREE.Material)=>{
     const saved=new Map<THREE.Mesh,THREE.Material|THREE.Material[]>();
-    d.baby.group.traverse(object=>{if(object instanceof THREE.Mesh){saved.set(object,object.material);object.material=material;}});
+    for(const root of d.cutout)root.traverse(object=>{if(object instanceof THREE.Mesh){saved.set(object,object.material);object.material=material;}});
     return ()=>{for(const [mesh,original] of saved)mesh.material=original;};
   };
   // The mattes are data, not pictures: no tone mapping, so white is 255 and a
@@ -73,9 +75,9 @@ export function installCapture(d:CaptureDependencies) {
     },
     async silhouette() {
       const restore=swapMaterials(white);
-      matteScene.add(d.baby.group);
+      matteScene.add(...d.cutout);
       try {await matteRender(matteScene);}
-      finally {d.scene.add(d.baby.group);restore();}
+      finally {d.scene.add(...d.cutout);restore();}
     },
     async shadowPlate() {
       const restore=swapMaterials(black);

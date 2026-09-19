@@ -23,6 +23,11 @@ export type WordmarkConfig={
   readonly offsetZ:number;
 };
 
+export type StainConfig={
+  /** Metres across; slightly wider than the character's footprint. Colours are the mark's own. */
+  readonly width:number;
+};
+
 export type ChromeConfig={
   readonly masthead:boolean;
   readonly reset:boolean;
@@ -52,6 +57,8 @@ export type SceneConfig={
   /** The home portal, and with it the tricycle and soccer worlds. */
   readonly portal:boolean;
   readonly wordmark:WordmarkConfig|null;
+  /** The wordmark's splat, flat on the ground under the character — the smash he landed in. */
+  readonly stain:StainConfig|null;
   /** Hop on a timer until the first interaction; null means the toy waits to be moved. */
   readonly idleHop:IdleHopConfig|null;
   /** Metres from the character to start the camera at; null keeps the playroom's opening framing. */
@@ -76,6 +83,7 @@ export const FULL_SCENE:SceneConfig={
   playroom:true,
   portal:true,
   wordmark:null,
+  stain:null,
   idleHop:null,
   cameraDistance:null,
   chrome:{masthead:true,reset:true,flavorPicker:true,lightingMode:true,mute:true,keyboardHints:true,touchControls:true,sourceLink:false},
@@ -107,6 +115,8 @@ export const EMBED_SCENE:SceneConfig={
   // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The
   // extruded letters are still a config away — see src/graphics/scene/wordmark.ts.
   wordmark:null,
+  // The smush mark as ink under him, a little wider than he is (Dustin, 2026-09-19).
+  stain:{width:.13},
   // A beat of life beside the form: a hop every three seconds until the
   // visitor takes over (Dustin, 2026-09-19).
   idleHop:{intervalSeconds:3},

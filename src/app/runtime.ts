@@ -8,6 +8,7 @@ import { Baby } from '../graphics/character/baby.ts';
 import { loadEnvironment } from '../graphics/scene/environment.ts';
 import { makeSweep, type GroundSurface } from '../graphics/scene/sweep.ts';
 import { loadWordmark } from '../graphics/scene/wordmark.ts';
+import { loadStain } from '../graphics/scene/stain.ts';
 import { Locomotion } from './locomotion.ts';
 import { Input } from './input.ts';
 import { JellySound } from './sound.ts';
@@ -78,6 +79,8 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
     :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop,config.ground.kind==='sweep'?config.ground.lift:0);
   scene.add(ground.mesh);
   if(wordmark)scene.add(wordmark.group);
+  const stain=config.stain?await loadStain(config.stain,environment,facilityShadows,caustics):undefined;
+  if(stain)scene.add(stain.group);
   const composite=createComposite(renderer,scene,camera,profile.bloomResolutionScale);
   const rig=new Locomotion(body);
   const facilities=new Facilities(body);
@@ -137,7 +140,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const lighting=await lightingModule;
   const lightingMode=lighting&&nightEnvironment?new lighting.LightingMode(renderer,scene,camera,environment,nightEnvironment,async(light,signal)=>{
     optics.setLightDirection(light.incoming);
-    facilityShadows.setLighting(light.incoming,light.windowFraction);caustics.setLighting(light);ground.setLighting(light);
+    facilityShadows.setLighting(light.incoming,light.windowFraction);caustics.setLighting(light);ground.setLighting(light);stain?.setLighting(light);
     localReflections.setEnvironment(light.reflectionTexture);baby.setReflectionMap(localReflections.texture,light.intensity);
     // Refresh every visible derivative while the animation loop holds the last
     // coherent frame. Worker and GPU work overlap where their dependencies allow.
@@ -222,7 +225,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       if(soccer)sound.soccerMotion(soccer.onField&&rig.grounded&&rig.move.lengthSq()>.01?Math.hypot(rig.velocity.x,rig.velocity.z):0);
       transport.follow();
       optics.update(renderer,body);
-      ground.mesh.position.x=body.center.x;ground.mesh.position.z=body.center.z;
+      ground.mesh.position.x=body.center.x;ground.mesh.position.z=body.center.z;stain?.follow(body.center.x,body.center.z);
       localReflections.update(renderer,body.center);
       return transport.update();
   };
@@ -250,12 +253,12 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       physicsClock.reset();lastTime=performance.now();void renderer.setAnimationLoop(frame);
     },{signal:lifecycle.signal});
   }
-  if(config.capture)installCapture({renderer,scene,camera,baby,composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
+  if(config.capture)installCapture({renderer,scene,camera,baby,cutout:stain?[baby.group,stain.group]:[baby.group],composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
   else await renderer.setAnimationLoop(frame);
   const dispose=()=>{
     if(disposed)return;disposed=true;
     lifecycle.abort();idleHop?.dispose();lightingMode?.dispose();void renderer.setAnimationLoop(null);input.dispose();sound.dispose();transport.dispose();resizeObserver.disconnect();cancelAnimationFrame(resizeFrame);
-    worlds.dispose();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();composite.dispose();localReflections.dispose();baby.dispose();wordmark?.dispose();ground.dispose();environment.dispose();optics.dispose();renderer.dispose();
+    worlds.dispose();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();composite.dispose();localReflections.dispose();baby.dispose();wordmark?.dispose();stain?.dispose();ground.dispose();environment.dispose();optics.dispose();renderer.dispose();
   };
   window.addEventListener('pagehide',event=>{if(!event.persisted)dispose();});
   if(import.meta.hot)import.meta.hot.dispose(dispose);
