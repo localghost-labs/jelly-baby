@@ -90,7 +90,7 @@ export const EMBED_SCENE:SceneConfig={
   mode:'embed',
   flavor:'grape',
   backdrop:SMASHBAR_SWEEP,
-  ground:{kind:'sweep',color:SMASHBAR_SWEEP,lift:1},
+  ground:{kind:'sweep',color:SMASHBAR_SWEEP},
   playroom:false,
   portal:false,
   // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The
