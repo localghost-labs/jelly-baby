@@ -75,9 +75,8 @@ export const FULL_SCENE:SceneConfig={
 const SMASHBAR_LAVENDER='#e9d7fe';
 
 /**
- * The Smashbar auth-page backdrop: grape jelly on a lavender sweep in front of
- * the wordmark, no playroom, no worlds, only the mute button and the keyboard
- * hints for chrome. Desktop only by the embedder's choice, so no touch controls.
+ * The Smashbar auth-page backdrop: grape jelly alone on a lavender sweep, no
+ * playroom, no worlds, only the mute button and the keyboard hints for chrome. Desktop only by the embedder's choice, so no touch controls.
  */
 export const EMBED_SCENE:SceneConfig={
   mode:'embed',
@@ -86,8 +85,9 @@ export const EMBED_SCENE:SceneConfig={
   ground:{kind:'sweep',color:SMASHBAR_LAVENDER},
   playroom:false,
   portal:false,
-  // Letters only; the splat glyph is not built — the jelly in front of them is the splat, come alive.
-  wordmark:{width:.42,depth:.012,color:'#7f56d9',offsetZ:-.16},
+  // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The
+  // extruded letters are still a config away — see src/graphics/scene/wordmark.ts.
+  wordmark:null,
   chrome:{masthead:false,reset:false,flavorPicker:false,lightingMode:false,mute:true,keyboardHints:true,touchControls:false,sourceLink:true},
   lifecycleMessages:true,
   pauseWhenHidden:true,
