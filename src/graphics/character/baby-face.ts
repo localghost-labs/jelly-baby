@@ -4,6 +4,7 @@ import { refinePatch } from './surface-details.ts';
 import { FaceSkin } from './face-skin.ts';
 import { SleepBubble } from './sleep-bubble.ts';
 import { FaceExpression } from './face-expression.ts';
+import { DEFAULT_FACE, type FacePalette } from './jelly-flavors.ts';
 
 type Feature='eye'|'blush'|'brow'|'mouth'|'tongue';
 type Detail={mesh:THREE.Mesh;rest:Float32Array;cx:number;cy:number;depth:number;kind:Feature};
@@ -20,14 +21,16 @@ export class BabyFace {
   private lastSleep=-1;
   private readonly bubble:SleepBubble;
   private readonly body:SoftBody;
+  private readonly ink:Record<keyof FacePalette,THREE.MeshPhysicalNodeMaterial>;
   constructor(body:SoftBody,group:THREE.Group) {
     this.body=body;
     this.skin=new FaceSkin(body);
     this.bubble=new SleepBubble(group);
-    const eye=new THREE.MeshPhysicalNodeMaterial({color:'#142905',roughness:.13,clearcoat:1,clearcoatRoughness:.06});
-    const mouth=new THREE.MeshPhysicalNodeMaterial({color:'#254508',roughness:.24,clearcoat:.6});
-    const tongue=new THREE.MeshPhysicalNodeMaterial({color:'#b5d641',roughness:.24,clearcoat:.5});
-    const blush=new THREE.MeshPhysicalNodeMaterial({color:'#edab4f',roughness:.3,transparent:true,opacity:.30,depthWrite:false});
+    const eye=new THREE.MeshPhysicalNodeMaterial({color:DEFAULT_FACE.eye,roughness:.13,clearcoat:1,clearcoatRoughness:.06});
+    const mouth=new THREE.MeshPhysicalNodeMaterial({color:DEFAULT_FACE.mouth,roughness:.24,clearcoat:.6});
+    const tongue=new THREE.MeshPhysicalNodeMaterial({color:DEFAULT_FACE.tongue,roughness:.24,clearcoat:.5});
+    const blush=new THREE.MeshPhysicalNodeMaterial({color:DEFAULT_FACE.blush,roughness:.3,transparent:true,opacity:.30,depthWrite:false});
+    this.ink={eye,mouth,tongue,blush};
     const add=(geometry:THREE.BufferGeometry,mat:THREE.Material,cx:number,cy:number,depth:number,kind:Feature)=>{
       const rest=new Float32Array(geometry.getAttribute('position').array);
       geometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rest.length),3).setUsage(THREE.DynamicDrawUsage));
@@ -51,6 +54,10 @@ export class BabyFace {
     add(refinePatch(new THREE.ShapeGeometry(smile,24)),mouth,0,.0389,.00018,'mouth');
     const lip=new THREE.Shape();lip.absellipse(0,0,.0024,.00125,0,Math.PI*2,false,0);
     add(refinePatch(new THREE.ShapeGeometry(lip,24)),tongue,0,.0368,.00028,'tongue');
+  }
+  /** Recolour the ink for a flavor; geometry and expression are untouched. */
+  setPalette(palette:FacePalette) {
+    for(const feature of ['eye','mouth','tongue','blush'] as const)this.ink[feature].color.set(palette[feature]);
   }
   reset() { this.expression.reset();this.bubble.reset(); }
   update(dt:number,playing=false,sleeping=false,crying=false) {
