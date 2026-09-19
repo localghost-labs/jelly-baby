@@ -13,8 +13,8 @@ export type StainOptions={
 
 export type Stain={
   readonly group:THREE.Group;
-  /** Keep it under the character; the ground does the same. */
-  follow(x:number,z:number):void;
+  /** Where he landed. Set once; he walks away from it. */
+  placeAt(x:number,z:number):void;
   setLighting(light:{windowFraction:number}):void;
   dispose():void;
 };
@@ -23,8 +23,8 @@ export type Stain={
 const HEIGHT=.0002;
 
 /**
- * Smashbar's smush mark as a flat ink stain on the ground under the character —
- * the smash he landed in. Each fill in the SVG becomes one matte material in
+ * Smashbar's smush mark as a flat ink stain on the ground where the character
+ * landed. It stays put; he can wander off it. Each fill in the SVG becomes one matte material in
  * that colour, and every shape is a ground receiver like the sweep, so his
  * shadow and caustic fall on the ink too.
  */
@@ -63,7 +63,7 @@ export async function loadStain(options:StainOptions,light:{windowFraction:numbe
   const group=new THREE.Group();group.add(glyph);group.position.y=HEIGHT;
   return {
     group,
-    follow(x,z){group.position.x=x;group.position.z=z;},
+    placeAt(x,z){group.position.x=x;group.position.z=z;},
     setLighting(next){fraction.value=next.windowFraction;},
     dispose(){for(const geometry of geometries)geometry.dispose();for(const material of materials.values())material.dispose();group.removeFromParent();},
   };

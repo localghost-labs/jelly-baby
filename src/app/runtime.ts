@@ -173,6 +173,8 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   // Let contact establish itself before displaying the first frame.
   for(let i=0;i<80;i++){rig.step(PHYS.step);body.step(PHYS.step);}
   body.updateSurface();
+  // The ink is where he came to rest, and stays there.
+  stain?.placeAt(body.center.x,body.center.z);
   stage('Warming collisions');
   facilities.warmupCollisions();
   baby.update();input.update(1);
@@ -225,7 +227,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       if(soccer)sound.soccerMotion(soccer.onField&&rig.grounded&&rig.move.lengthSq()>.01?Math.hypot(rig.velocity.x,rig.velocity.z):0);
       transport.follow();
       optics.update(renderer,body);
-      ground.mesh.position.x=body.center.x;ground.mesh.position.z=body.center.z;stain?.follow(body.center.x,body.center.z);
+      ground.mesh.position.x=body.center.x;ground.mesh.position.z=body.center.z;
       localReflections.update(renderer,body.center);
       return transport.update();
   };

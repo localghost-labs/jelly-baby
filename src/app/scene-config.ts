@@ -57,7 +57,7 @@ export type SceneConfig={
   /** The home portal, and with it the tricycle and soccer worlds. */
   readonly portal:boolean;
   readonly wordmark:WordmarkConfig|null;
-  /** The wordmark's splat, flat on the ground under the character — the smash he landed in. */
+  /** The smush mark, flat on the ground where the character landed; it stays put as he wanders. */
   readonly stain:StainConfig|null;
   /** Hop on a timer until the first interaction; null means the toy waits to be moved. */
   readonly idleHop:IdleHopConfig|null;
