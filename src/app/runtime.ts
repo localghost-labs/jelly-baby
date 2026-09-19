@@ -101,6 +101,13 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const reset=()=>{if(worlds.loading)return;sound.stopFacilities();worlds.reset();input.teleport();rig.yaw=worlds.arrivalYaw;baby.resetFace();physicsClock.reset();};
   const input=new Input(camera,renderer.domElement,body,baby.mesh,rig,sound);
   const idleHop=config.idleHop?new IdleHop(rig,renderer.domElement,config.idleHop):undefined;
+  if(config.cameraDistance!==null) {
+    // Same direction as the playroom's opening shot, at the configured distance.
+    // The follow logic carries the camera's offset from the target, so the
+    // distance holds until the visitor turns the wheel.
+    const offset=camera.position.clone().sub(input.controls.target).setLength(config.cameraDistance);
+    camera.position.copy(input.controls.target).add(offset);input.controls.update();
+  }
   input.bodyControlled=()=>worlds.loading||worlds.menu.opened||!!worlds.facilities.active;
   input.menuOpen=()=>worlds.menu.opened;
   input.soccerOnField=()=>worlds.inSoccer&&(worlds.soccer?.physics.onField??false);

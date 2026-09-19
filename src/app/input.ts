@@ -11,6 +11,8 @@ import { TricycleCamera } from '../worlds/toy-track/facilities/tricycle/camera.t
 import { SoccerCameraPitch } from '../worlds/soccer/camera.ts';
 
 const EMPTY_COLLISION_BOXES:readonly CollisionBox[]=[];
+/** How far the orbit lets the camera back off from the character, in metres. */
+export const ORBIT_MAX_DISTANCE=.42;
 
 type PointerGrab={
   grab:NonNullable<ReturnType<typeof surfaceGrab>>;
@@ -70,7 +72,7 @@ export class Input {
     const c=this.controls;
     c.target.copy(body.center);this.follow.copy(c.target);
     c.enablePan=false;c.enableDamping=true;c.dampingFactor=.07;
-    c.minDistance=.135;c.maxDistance=.42;c.minPolarAngle=.22;c.maxPolarAngle=1.10;
+    c.minDistance=.135;c.maxDistance=ORBIT_MAX_DISTANCE;c.minPolarAngle=.22;c.maxPolarAngle=1.10;
     c.rotateSpeed=.65;c.zoomSpeed=.65;c.update();
     const signal=this.abort.signal;
     canvas.addEventListener('pointerdown',this.begin,{capture:true,signal});
@@ -288,7 +290,7 @@ export class Input {
   }
   update(dt:number) {
     const soccer=this.soccerOnField();
-    this.controls.maxDistance=.42;
+    this.controls.maxDistance=ORBIT_MAX_DISTANCE;
     this.soccerCamera.setFieldState(this.camera,soccer);
     this.controls.maxPolarAngle=this.soccerCamera.needsWidePolarLimit?1.46:Math.PI/2-THREE.MathUtils.degToRad(this.camera.fov)/2-.10;
     const riding=this.ridingVehicle(),mode=soccer?'soccer':riding?'vehicle':'walk';

@@ -1,5 +1,6 @@
 import { DEFAULT_JELLY_FLAVOR, type JellyFlavorName } from '../graphics/character/jelly-flavors.ts';
 import type { IdleHopConfig } from './idle-hop.ts';
+import { ORBIT_MAX_DISTANCE } from './input.ts';
 
 /** Where this fork's source lives. The embed's `source` link and the README point here. */
 export const SOURCE_URL='https://github.com/localghost-labs/jelly-baby';
@@ -53,6 +54,8 @@ export type SceneConfig={
   readonly wordmark:WordmarkConfig|null;
   /** Hop on a timer until the first interaction; null means the toy waits to be moved. */
   readonly idleHop:IdleHopConfig|null;
+  /** Metres from the character to start the camera at; null keeps the playroom's opening framing. */
+  readonly cameraDistance:number|null;
   readonly chrome:ChromeConfig;
   /** Post `jelly:ready` / `jelly:failed` to the embedding window. */
   readonly lifecycleMessages:boolean;
@@ -72,6 +75,7 @@ export const FULL_SCENE:SceneConfig={
   portal:true,
   wordmark:null,
   idleHop:null,
+  cameraDistance:null,
   chrome:{masthead:true,reset:true,flavorPicker:true,lightingMode:true,mute:true,keyboardHints:true,touchControls:true,sourceLink:false},
   lifecycleMessages:false,
   pauseWhenHidden:false,
@@ -103,6 +107,8 @@ export const EMBED_SCENE:SceneConfig={
   // A beat of life beside the form: a hop every three seconds until the
   // visitor takes over (Dustin, 2026-09-19).
   idleHop:{intervalSeconds:3},
+  // Open as far back as the wheel can take it (Dustin, 2026-09-19).
+  cameraDistance:ORBIT_MAX_DISTANCE,
   chrome:{masthead:false,reset:false,flavorPicker:false,lightingMode:false,mute:true,keyboardHints:true,touchControls:false,sourceLink:true},
   lifecycleMessages:true,
   pauseWhenHidden:true,
