@@ -1,4 +1,5 @@
 import { DEFAULT_JELLY_FLAVOR, type JellyFlavorName } from '../graphics/character/jelly-flavors.ts';
+import type { IdleHopConfig } from './idle-hop.ts';
 
 /** Where this fork's source lives. The embed's `source` link and the README point here. */
 export const SOURCE_URL='https://github.com/localghost-labs/jelly-baby';
@@ -50,6 +51,8 @@ export type SceneConfig={
   /** The home portal, and with it the tricycle and soccer worlds. */
   readonly portal:boolean;
   readonly wordmark:WordmarkConfig|null;
+  /** Hop on a timer until the first interaction; null means the toy waits to be moved. */
+  readonly idleHop:IdleHopConfig|null;
   readonly chrome:ChromeConfig;
   /** Post `jelly:ready` / `jelly:failed` to the embedding window. */
   readonly lifecycleMessages:boolean;
@@ -68,6 +71,7 @@ export const FULL_SCENE:SceneConfig={
   playroom:true,
   portal:true,
   wordmark:null,
+  idleHop:null,
   chrome:{masthead:true,reset:true,flavorPicker:true,lightingMode:true,mute:true,keyboardHints:true,touchControls:true,sourceLink:false},
   lifecycleMessages:false,
   pauseWhenHidden:false,
@@ -92,6 +96,9 @@ export const EMBED_SCENE:SceneConfig={
   // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The
   // extruded letters are still a config away — see src/graphics/scene/wordmark.ts.
   wordmark:null,
+  // A beat of life beside the form: a hop every three seconds until the
+  // visitor takes over (Dustin, 2026-09-19).
+  idleHop:{intervalSeconds:3},
   chrome:{masthead:false,reset:false,flavorPicker:false,lightingMode:false,mute:true,keyboardHints:true,touchControls:false,sourceLink:true},
   lifecycleMessages:true,
   pauseWhenHidden:true,

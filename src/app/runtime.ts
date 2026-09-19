@@ -25,6 +25,7 @@ import { SOCCER_RUN_CADENCE_SCALE, SOCCER_RUN_SPEED_SCALE } from '../worlds/socc
 import { LocalReflectionProbe } from '../graphics/scene/local-reflections.ts';
 import { startupPlatformProfile } from './platform-profile.ts';
 import { resolveSceneConfig, type SceneConfig } from './scene-config.ts';
+import { IdleHop } from './idle-hop.ts';
 
 export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,config:SceneConfig=resolveSceneConfig()) {
   const profile=startupPlatformProfile();
@@ -99,6 +100,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   let lastTime=0,disposed=false;
   const reset=()=>{if(worlds.loading)return;sound.stopFacilities();worlds.reset();input.teleport();rig.yaw=worlds.arrivalYaw;baby.resetFace();physicsClock.reset();};
   const input=new Input(camera,renderer.domElement,body,baby.mesh,rig,sound);
+  const idleHop=config.idleHop?new IdleHop(rig,renderer.domElement,config.idleHop):undefined;
   input.bodyControlled=()=>worlds.loading||worlds.menu.opened||!!worlds.facilities.active;
   input.menuOpen=()=>worlds.menu.opened;
   input.soccerOnField=()=>worlds.inSoccer&&(worlds.soccer?.physics.onField??false);
@@ -183,6 +185,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       if(document.hidden){physicsClock.reset();return;}
       if(lightingMode?.switching){physicsClock.reset();return;}
       if(worlds.loading||worlds.menu.opened){physicsClock.reset();return;}
+      idleHop?.step(dt);
       const steps=physicsClock.advance(dt,()=>{
         if(worlds.loading)return;
         const current=worlds.facilities;
@@ -231,10 +234,10 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   await renderer.setAnimationLoop(frame);
   const dispose=()=>{
     if(disposed)return;disposed=true;
-    lifecycle.abort();lightingMode?.dispose();void renderer.setAnimationLoop(null);input.dispose();sound.dispose();transport.dispose();resizeObserver.disconnect();cancelAnimationFrame(resizeFrame);
+    lifecycle.abort();idleHop?.dispose();lightingMode?.dispose();void renderer.setAnimationLoop(null);input.dispose();sound.dispose();transport.dispose();resizeObserver.disconnect();cancelAnimationFrame(resizeFrame);
     worlds.dispose();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();composite.dispose();localReflections.dispose();baby.dispose();wordmark?.dispose();ground.dispose();environment.dispose();optics.dispose();renderer.dispose();
   };
   window.addEventListener('pagehide',event=>{if(!event.persisted)dispose();});
   if(import.meta.hot)import.meta.hot.dispose(dispose);
-  return {stop:()=>{disposed=true;lifecycle.abort();worlds.dispose();lightingMode?.dispose();input.clear();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();sound.dispose();transport.dispose();localReflections.dispose();void renderer.setAnimationLoop(null);}};
+  return {stop:()=>{disposed=true;lifecycle.abort();idleHop?.dispose();worlds.dispose();lightingMode?.dispose();input.clear();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();sound.dispose();transport.dispose();localReflections.dispose();void renderer.setAnimationLoop(null);}};
 }
