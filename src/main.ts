@@ -6,6 +6,9 @@ const config=resolveSceneConfig();
 // index.html sets this before its preloads. Setting it again here keeps the
 // stylesheet honest if the document is ever served without that bootstrap.
 document.documentElement.dataset.jellyMode=config.mode;
+// The page and the loading card paint in the scene's backdrop colour, so
+// nothing else shows before the canvas does.
+document.documentElement.style.setProperty('--jelly-backdrop',config.backdrop);
 
 const SOUND_BUTTON=`
     <button id="sound" class="icon-button" aria-label="Mute sound" aria-pressed="false" title="Sound">
