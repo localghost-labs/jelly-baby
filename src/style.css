@@ -99,6 +99,7 @@ h2{font:italic 39px Georgia,serif;letter-spacing:-1.6px;font-weight:400;margin:0
 [data-jelly-mode="embed"] .icon-button{background:#ffffff40;border-color:#ffffff7a}
 .source-link{pointer-events:auto;color:inherit;font-size:10px;letter-spacing:.025em;text-decoration:underline;text-underline-offset:2px}
 .source-link:hover,.source-link:focus-visible{color:#42307d}
+.actions .source-link-action{align-self:center;order:-1;margin-right:6px;color:#53389ebd}
 [data-jelly-mode="embed"] #loading{background:var(--jelly-backdrop,#e9d7fe);font-family:"Inter",ui-sans-serif,-apple-system,"Segoe UI",sans-serif}
 [data-jelly-mode="embed"] .jelly-mark{background:radial-gradient(ellipse at 30% 20%,#e9d7fe 0,#9e77ed 50%,#6941c6 100%);box-shadow:inset -3px -3px 8px #53389e20,0 9px 15px #7f56d914}
 [data-jelly-mode="embed"] h2{font:600 30px/1.2 "Inter",ui-sans-serif,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.6px;color:#181d27}

@@ -109,7 +109,9 @@ export const EMBED_SCENE:SceneConfig={
   idleHop:{intervalSeconds:3},
   // Open as far back as the wheel can take it (Dustin, 2026-09-19).
   cameraDistance:ORBIT_MAX_DISTANCE,
-  chrome:{masthead:false,reset:false,flavorPicker:false,lightingMode:false,mute:true,keyboardHints:true,touchControls:false,sourceLink:true},
+  // No keyboard hints (Dustin, 2026-09-19): the idle hop is the invitation. The
+  // source link moves up beside the mute button so the offer of source stays visible.
+  chrome:{masthead:false,reset:false,flavorPicker:false,lightingMode:false,mute:true,keyboardHints:false,touchControls:false,sourceLink:true},
   lifecycleMessages:true,
   pauseWhenHidden:true,
   // The embedder's panel is a portrait column that can be narrower than 700 px

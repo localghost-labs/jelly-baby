@@ -25,17 +25,22 @@ const LIGHTING_BUTTON=`
     </button>`;
 
 /** Only the controls the scene names are in the document at all; the runtime binds to what it finds. */
+/** The GPL's "offer of source" at the point of use. Opens a new tab; an embedder's sandbox must allow popups. */
+function sourceLinkMarkup(className:string) {
+  return `<a class="${className}" href="${SOURCE_URL}" target="_blank" rel="noopener noreferrer">source</a>`;
+}
+
 function actionsMarkup(chrome:ChromeConfig) {
-  const buttons=[chrome.mute&&SOUND_BUTTON,chrome.reset&&RESET_BUTTON,chrome.flavorPicker&&flavorPickerMarkup(),chrome.lightingMode&&LIGHTING_BUTTON].filter(Boolean);
+  // With the hints bar gone the source link needs another home: beside the mute button.
+  const buttons=[chrome.mute&&SOUND_BUTTON,chrome.reset&&RESET_BUTTON,chrome.flavorPicker&&flavorPickerMarkup(),chrome.lightingMode&&LIGHTING_BUTTON,
+    chrome.sourceLink&&!chrome.keyboardHints&&sourceLinkMarkup('source-link source-link-action')].filter(Boolean);
   return buttons.length?`<nav class="actions" aria-label="Game controls">${buttons.join('')}</nav>`:'';
 }
 
 function hintsMarkup(chrome:ChromeConfig) {
   if(!chrome.keyboardHints)return '';
-  // The source link is the GPL's "offer of source" at the point of use. Its
-  // target is a new tab; an embedder's sandbox must allow popups for it to open.
   const source=chrome.sourceLink?`
-    <span class="separator"></span><a class="source-link" href="${SOURCE_URL}" target="_blank" rel="noopener noreferrer">source</a>`:'';
+    <span class="separator"></span>${sourceLinkMarkup('source-link')}`:'';
   return `
   <footer class="desktop-hints" aria-label="Keyboard controls">
     <span><kbd>W</kbd><span class="key-row"><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span class="hint-label">wander</span>
