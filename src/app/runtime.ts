@@ -6,9 +6,8 @@ import { RefractiveLightField } from '../graphics/optics/refractive-light.js';
 import { CausticReceivers } from '../graphics/optics/caustic-receivers.ts';
 import { Baby } from '../graphics/character/baby.ts';
 import { loadEnvironment } from '../graphics/scene/environment.ts';
-import { makeSweep, type GroundSurface } from '../graphics/scene/sweep.ts';
+import { loadStainTexture, makeSweep, type GroundSurface } from '../graphics/scene/sweep.ts';
 import { loadWordmark } from '../graphics/scene/wordmark.ts';
-import { loadStain } from '../graphics/scene/stain.ts';
 import { Locomotion } from './locomotion.ts';
 import { Input } from './input.ts';
 import { JellySound } from './sound.ts';
@@ -50,12 +49,13 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const camera=new THREE.PerspectiveCamera(36,1,.001,40);
   camera.position.set(.111,.170,.256);
   stage('Loading the little room');
-  const [environment,nightEnvironment,cage,tableTextures,wordmark]=await Promise.all([
+  const [environment,nightEnvironment,cage,tableTextures,wordmark,stainMap]=await Promise.all([
     loadEnvironment(renderer,scene),
     lightingModule?.then(module=>module.loadNightEnvironment(renderer,scene)),
     loadBabyCage(),
     tableModule?.then(module=>module.loadTableTextures(profile.mobile)),
     config.wordmark?loadWordmark(config.wordmark):undefined,
+    config.stain?loadStainTexture():undefined,
   ]);
   // Start the large table uploads before CPU-side world construction so the
   // backend can overlap transfer work with geometry/physics setup.
@@ -76,11 +76,10 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const table=await tableModule;
   const ground:GroundSurface=table&&tableTextures
     ?table.makeTable(optics,environment,facilityShadows,caustics,tableTextures)
-    :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop,config.ground.kind==='sweep'?config.ground.lift:0);
+    :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop,config.ground.kind==='sweep'?config.ground.lift:0,
+      stainMap&&config.stain?{map:stainMap,width:config.stain.width}:undefined);
   scene.add(ground.mesh);
   if(wordmark)scene.add(wordmark.group);
-  const stain=config.stain?await loadStain(config.stain,environment,facilityShadows,caustics):undefined;
-  if(stain)scene.add(stain.group);
   const composite=createComposite(renderer,scene,camera,profile.bloomResolutionScale);
   const rig=new Locomotion(body);
   const facilities=new Facilities(body);
@@ -140,7 +139,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const lighting=await lightingModule;
   const lightingMode=lighting&&nightEnvironment?new lighting.LightingMode(renderer,scene,camera,environment,nightEnvironment,async(light,signal)=>{
     optics.setLightDirection(light.incoming);
-    facilityShadows.setLighting(light.incoming,light.windowFraction);caustics.setLighting(light);ground.setLighting(light);stain?.setLighting(light);
+    facilityShadows.setLighting(light.incoming,light.windowFraction);caustics.setLighting(light);ground.setLighting(light);
     localReflections.setEnvironment(light.reflectionTexture);baby.setReflectionMap(localReflections.texture,light.intensity);
     // Refresh every visible derivative while the animation loop holds the last
     // coherent frame. Worker and GPU work overlap where their dependencies allow.
@@ -174,7 +173,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   for(let i=0;i<80;i++){rig.step(PHYS.step);body.step(PHYS.step);}
   body.updateSurface();
   // The ink is where he came to rest, and stays there.
-  stain?.placeAt(body.center.x,body.center.z);
+  ground.placeStainAt?.(body.center.x,body.center.z);
   stage('Warming collisions');
   facilities.warmupCollisions();
   baby.update();input.update(1);
@@ -255,12 +254,12 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       physicsClock.reset();lastTime=performance.now();void renderer.setAnimationLoop(frame);
     },{signal:lifecycle.signal});
   }
-  if(config.capture)installCapture({renderer,scene,camera,baby,cutout:stain?[baby.group,stain.group]:[baby.group],composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
+  if(config.capture)installCapture({renderer,scene,camera,baby,ground:ground.stainSilhouette?{mesh:ground.mesh,silhouette:ground.stainSilhouette}:undefined,composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
   else await renderer.setAnimationLoop(frame);
   const dispose=()=>{
     if(disposed)return;disposed=true;
     lifecycle.abort();idleHop?.dispose();lightingMode?.dispose();void renderer.setAnimationLoop(null);input.dispose();sound.dispose();transport.dispose();resizeObserver.disconnect();cancelAnimationFrame(resizeFrame);
-    worlds.dispose();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();composite.dispose();localReflections.dispose();baby.dispose();wordmark?.dispose();stain?.dispose();ground.dispose();environment.dispose();optics.dispose();renderer.dispose();
+    worlds.dispose();facilities.dispose();facilityShadows.dispose();caustics.dispose();flavorPicker?.dispose();composite.dispose();localReflections.dispose();baby.dispose();wordmark?.dispose();ground.dispose();environment.dispose();optics.dispose();renderer.dispose();
   };
   window.addEventListener('pagehide',event=>{if(!event.persisted)dispose();});
   if(import.meta.hot)import.meta.hot.dispose(dispose);

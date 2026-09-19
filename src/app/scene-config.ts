@@ -24,7 +24,7 @@ export type WordmarkConfig={
 };
 
 export type StainConfig={
-  /** Metres across; slightly wider than the character's footprint. Colours are the mark's own. */
+  /** Metres across the (square) mark; slightly wider than the character's footprint. */
   readonly width:number;
 };
 

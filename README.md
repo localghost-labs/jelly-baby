@@ -65,7 +65,7 @@ Pages cache rules for the hashed output; any other host ignores it.
 
 - `src/app/scene-config.ts` — the two scene configurations and the `?embed=1` switch; `src/app/idle-hop.ts` — the embed's timed hop until the first interaction.
 - `src/main.ts`, `src/app/runtime.ts` — markup and construction driven by the configuration; `jelly:ready`/`jelly:failed`; pause while hidden.
-- `src/graphics/scene/sweep.ts`, `wordmark.ts`, `src/assets/smashbar-wordmark.svg` — the sweep ground and an extruded wordmark (available to a scene configuration; the Smashbar scene does not use it).
+- `src/graphics/scene/sweep.ts`, `wordmark.ts`, `src/assets/smashbar-wordmark.svg` — the sweep ground and an extruded wordmark (available to a scene configuration; the Smashbar scene does not use it). The sweep can carry the smush mark in its albedo (`src/assets/smush-mark.png`, rasterised from `smush-mark.svg` at 1024 px with a transparent border).
 - `src/graphics/scene/environment.ts`, `night-environment.ts`, `src/app/lighting-mode.ts`, `src/worlds/main/playroom.ts` — the night map, the lighting switch, the table and the playroom furniture moved behind dynamic imports; the code inside is unchanged.
 - `src/worlds/travel.ts` — the home portal is optional (`portal=false` builds no worlds).
 - `src/graphics/character/jelly-flavors.ts` — a `grape` flavor; the default stays lime.
