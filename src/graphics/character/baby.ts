@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import { attribute } from 'three/tsl';
 import { BabyFace } from './baby-face.ts';
 import type { SoftBody } from '../../physics/soft-body.js';
-import { DEFAULT_JELLY_FLAVOR, JELLY_FLAVORS, type JellyFlavorName } from './jelly-flavors.ts';
+import { DEFAULT_FACE, DEFAULT_JELLY_FLAVOR, JELLY_FLAVORS, type JellyFlavor, type JellyFlavorName } from './jelly-flavors.ts';
 
 export const ABSORPTION=JELLY_FLAVORS[DEFAULT_JELLY_FLAVOR].absorption;
 
@@ -21,12 +21,13 @@ export class Baby {
       transparent:false,side:THREE.FrontSide,flatShading:false,
     });
     this.jellyMaterial=material;
-    this.setFlavor(DEFAULT_JELLY_FLAVOR);
     material.thicknessNode=attribute('opticalThickness','float');
     this.mesh=new THREE.Mesh(body.surface.geometry,material);
     this.mesh.renderOrder=1;
     this.mesh.frustumCulled=false;this.group.add(this.mesh);
     this.face=new BabyFace(body,this.group);
+    // After the face exists: a flavor recolours the body AND its ink.
+    this.setFlavor(DEFAULT_JELLY_FLAVOR);
     this.update();
   }
   setReflectionMap(texture:THREE.Texture|null,intensity:number) {
@@ -34,12 +35,13 @@ export class Baby {
     this.jellyMaterial.envMapIntensity=intensity;
   }
   setFlavor(flavor:JellyFlavorName) {
-    const look=JELLY_FLAVORS[flavor],distance=this.jellyMaterial.attenuationDistance;
+    const look:JellyFlavor=JELLY_FLAVORS[flavor],distance=this.jellyMaterial.attenuationDistance;
     this.jellyMaterial.color.set(look.surface);
     this.jellyMaterial.attenuationColor.setRGB(
       Math.exp(-look.absorption[0]*distance),Math.exp(-look.absorption[1]*distance),Math.exp(-look.absorption[2]*distance),
       THREE.LinearSRGBColorSpace,
     );
+    this.face.setPalette(look.face??DEFAULT_FACE);
   }
   update(dt=0,playing=false,sleeping=false,crying=false) { this.face.update(dt,playing,sleeping,crying); }
   resetFace() { this.face.reset(); }
