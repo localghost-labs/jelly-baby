@@ -79,8 +79,12 @@ export const FULL_SCENE:SceneConfig={
   canvasLabel:'Jelly baby. Use the touch joystick or WASD to walk, Space to jump. Press E or use the Play button near a facility; use the same action to get off. Drag the baby to stretch; drag the table to orbit.',
 };
 
-/** The sweep, the backdrop and the loading card share one colour: a white cyclorama (Dustin, 2026-09-19; was brand lavender #e9d7fe). */
-const SMASHBAR_SWEEP='#ffffff';
+/**
+ * The sweep, the backdrop and the loading card share one colour: a white
+ * cyclorama, leaning blue so it reads as daylight under the warm studio HDR
+ * (Dustin, 2026-09-19; was pure white, before that brand lavender #e9d7fe).
+ */
+const SMASHBAR_SWEEP='#eef3ff';
 
 /**
  * The Smashbar auth-page backdrop: grape jelly alone on a white sweep, no
