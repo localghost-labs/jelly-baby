@@ -148,12 +148,18 @@ export const EMBED_SCENE:SceneConfig={
  * same look, but nothing moves on its own, nothing announces itself and there
  * is no chrome in the way of the canvas.
  */
+/** Close for the landing hero, but far enough that his shadow's tip stays in frame (Dustin, 2026-09-20; half the orbit max clipped it). */
+const NEAR_DISTANCE=.32;
+
+/**
+ * The live embed at the hero's distance (`?embed=1&near=1`): for a small panel
+ * that shows a cropped band of the frame, where the wide framing leaves him tiny.
+ */
+export const NEAR_EMBED_SCENE:SceneConfig={...EMBED_SCENE,cameraDistance:NEAR_DISTANCE};
+
 export const CAPTURE_SCENE:SceneConfig={
   ...EMBED_SCENE,
-  // Close for the landing hero, but far enough that his shadow's tip stays in
-  // frame (Dustin, 2026-09-20; half the orbit max clipped it). The live embed
-  // keeps its wide framing.
-  cameraDistance:.32,
+  cameraDistance:NEAR_DISTANCE,
   idleHop:null,
   lifecycleMessages:false,
   pauseWhenHidden:false,
@@ -168,5 +174,7 @@ export function isEmbedSearch(search:string) {
 
 export function resolveSceneConfig(search:string=location.search):SceneConfig {
   if(!isEmbedSearch(search))return FULL_SCENE;
-  return new URLSearchParams(search).get('capture')==='1'?CAPTURE_SCENE:EMBED_SCENE;
+  const params=new URLSearchParams(search);
+  if(params.get('capture')==='1')return CAPTURE_SCENE;
+  return params.get('near')==='1'?NEAR_EMBED_SCENE:EMBED_SCENE;
 }
