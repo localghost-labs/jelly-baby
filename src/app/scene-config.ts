@@ -144,9 +144,10 @@ export const EMBED_SCENE:SceneConfig={
  */
 export const CAPTURE_SCENE:SceneConfig={
   ...EMBED_SCENE,
-  // Half the embed's distance: twice as large in the frame for the landing
-  // hero (Dustin, 2026-09-19). The live embed keeps its wide framing.
-  cameraDistance:ORBIT_MAX_DISTANCE/2,
+  // Close for the landing hero, but far enough that his shadow's tip stays in
+  // frame (Dustin, 2026-09-20; half the orbit max clipped it). The live embed
+  // keeps its wide framing.
+  cameraDistance:.27,
   idleHop:null,
   lifecycleMessages:false,
   pauseWhenHidden:false,
