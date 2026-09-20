@@ -177,7 +177,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   for(let i=0;i<80;i++){rig.step(PHYS.step);body.step(PHYS.step);}
   body.updateSurface();
   // The ink is where he came to rest, and stays there.
-  ground.placeStainAt?.(body.center.x,body.center.z);
+  ground.placeStainAt?.(body.center.x+(config.stain?.offset?.x??0),body.center.z+(config.stain?.offset?.z??0));
   stage('Warming collisions');
   facilities.warmupCollisions();
   baby.update();input.update(1);

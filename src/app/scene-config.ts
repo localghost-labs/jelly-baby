@@ -27,6 +27,8 @@ export type WordmarkConfig={
 export type StainConfig={
   /** Metres across the (square) mark; slightly wider than the character's footprint. */
   readonly width:number;
+  /** Metres from where he landed to the mark's centre: +z is toward the default camera. */
+  readonly offset?:{readonly x:number;readonly z:number};
 };
 
 export type ChromeConfig={
@@ -120,7 +122,7 @@ export const EMBED_SCENE:SceneConfig={
   // extruded letters are still a config away — see src/graphics/scene/wordmark.ts.
   wordmark:null,
   // The smush mark as ink under him, a little wider than he is (Dustin, 2026-09-19).
-  stain:{width:.13},
+  stain:{width:.13,offset:{x:0,z:.03}},
   // A beat of life beside the form: a hop every three seconds until the
   // visitor takes over (Dustin, 2026-09-19).
   idleHop:{intervalSeconds:3},
