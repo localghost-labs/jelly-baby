@@ -1,11 +1,13 @@
 import * as THREE from 'three/webgpu';
 import type { Baby } from '../graphics/character/baby.ts';
+import type { Locomotion } from './locomotion.ts';
 
 export type CaptureDependencies={
   readonly renderer:THREE.WebGPURenderer;
   readonly scene:THREE.Scene;
   readonly camera:THREE.PerspectiveCamera;
   readonly baby:Baby;
+  readonly rig:Locomotion;
   /** The ground and a material that draws it as its ink's alpha: the stain is part of the cutout. */
   readonly ground?:{readonly mesh:THREE.Mesh;readonly silhouette:THREE.Material};
   readonly composite:{render():void};
@@ -21,6 +23,8 @@ export type CaptureDependencies={
  */
 export type JellyCapture={
   step(dt?:number):Promise<{blink:number}>;
+  /** Queue one hop; it launches on the next grounded step, like a Space press. */
+  hop():void;
   /** The character flat white on black, nothing else. */
   silhouette():Promise<void>;
   /** The scene without post-processing, the character flat black: what remains is the ground and its shadow. */
@@ -69,6 +73,7 @@ export function installCapture(d:CaptureDependencies) {
     },'image/png');
   });
   window.__jellyCapture={
+    hop(){d.rig.jump();},
     async step(dt=1/30) {
       await d.advance(dt);d.composite.render();await presented();
       return {blink:d.baby.blink};

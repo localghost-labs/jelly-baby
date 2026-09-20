@@ -254,7 +254,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
       physicsClock.reset();lastTime=performance.now();void renderer.setAnimationLoop(frame);
     },{signal:lifecycle.signal});
   }
-  if(config.capture)installCapture({renderer,scene,camera,baby,ground:ground.stainSilhouette?{mesh:ground.mesh,silhouette:ground.stainSilhouette}:undefined,composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
+  if(config.capture)installCapture({renderer,scene,camera,baby,rig,ground:ground.stainSilhouette?{mesh:ground.mesh,silhouette:ground.stainSilhouette}:undefined,composite,advance:async dt=>{const refresh=advanceScene(dt);if(refresh)await refresh;}});
   else await renderer.setAnimationLoop(frame);
   const dispose=()=>{
     if(disposed)return;disposed=true;
