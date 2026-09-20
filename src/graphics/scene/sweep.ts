@@ -1,5 +1,6 @@
 import * as THREE from 'three/webgpu';
-import { mix, positionWorld, texture, uniform, vec2, vec3 } from 'three/tsl';
+import { float, mix, positionWorld, texture, uniform, vec2, vec3 } from 'three/tsl';
+import { GROUND_ALPHA } from './composite.ts';
 import type { RefractiveLightField } from '../optics/refractive-light.js';
 import type { CausticReceivers } from '../optics/caustic-receivers.ts';
 import type { FacilityShadows } from '../../facilities/shadows.ts';
@@ -40,10 +41,17 @@ export async function loadStainTexture():Promise<THREE.Texture> {
  *
  * `stain` paints the smush mark INTO the ground's albedo, in world space, at a
  * point set later (`placeStainAt`). It is the floor, not a decal on the floor:
- * one receiver, nothing to fight with, and his shadow and caustic fall on the
- * ink for the same reason they fall on the sweep.
+ * one receiver, nothing to fight with, and his shadow falls on the ink for the
+ * same reason it falls on the sweep.
+ *
+ * The sweep is UNLIT and flagged for the composite (alpha = GROUND_ALPHA), which
+ * passes it through without tone mapping: its colour is exactly the albedo times
+ * the receiver's shadow darkening, so a white sweep is white on screen, not the
+ * 84 % grey a lit white lands on under AgX. The character still refracts it —
+ * the transmission pass samples the ground's colour, and unlit white sits where
+ * the lit sweep did in linear terms.
  */
-export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string,lift=0,stain?:SweepStain):GroundSurface {
+export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string,stain?:SweepStain):GroundSurface {
   const fraction=uniform(light.windowFraction);
   const tint=new THREE.Color(color);
   const sweep=vec3(tint.r,tint.g,tint.b);
@@ -52,12 +60,10 @@ export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;
   const stainUv=positionWorld.xz.sub(stainCentre).div(stain?.width??1).mul(vec2(1,-1)).add(.5);
   const ink=stain?texture(stain.map,stainUv):undefined;
   const albedo=ink?mix(sweep,ink.rgb,ink.a):sweep;
-  const material=new THREE.MeshPhysicalNodeMaterial({color,metalness:0,roughness:.72,clearcoat:0});
-  // `lift` re-adds the sweep colour as emission so a bright cyclorama reads as
-  // bright after tonemapping; shadows and caustics still modulate the lit term.
-  // It must be the NODE: the caustic receiver extends `emissiveNode`, and a
-  // node there supersedes the plain `emissive` property entirely.
-  if(lift>0)material.emissiveNode=albedo.mul(lift);
+  // NoBlending (not transparent, so still in the opaque pass the character
+  // refracts) is what lets an opaque material write an alpha other than 1.
+  const material=new THREE.MeshBasicNodeMaterial({color,blending:THREE.NoBlending});
+  material.opacityNode=float(GROUND_ALPHA);
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(200,200),material);
   mesh.rotation.x=-Math.PI/2;mesh.position.y=-.00005;mesh.receiveCaustics=true;
   caustics.registerGround(mesh,albedo,facilities,fraction);

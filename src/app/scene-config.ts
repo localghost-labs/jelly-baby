@@ -8,11 +8,11 @@ export const SOURCE_URL='https://github.com/localghost-labs/jelly-baby';
 export type GroundConfig=
   |{readonly kind:'table'}
   /**
-   * A flat matte plane in one colour; with the backdrop set to the same colour
-   * the horizon disappears. `lift` adds the colour back as emission (0–1): a lit
-   * white plane tonemaps to light grey, and this is what makes it read white.
+   * A flat unlit plane in one colour, passed through the composite without tone
+   * mapping (so white is white); with the backdrop set to the same colour the
+   * horizon disappears.
    */
-  |{readonly kind:'sweep';readonly color:string;readonly lift?:number};
+  |{readonly kind:'sweep';readonly color:string};
 
 export type WordmarkConfig={
   /** Metres across the letters. The baby is ~7 cm. */
@@ -95,11 +95,12 @@ export const FULL_SCENE:SceneConfig={
 };
 
 /**
- * The sweep, the backdrop and the loading card share one colour: a white
- * cyclorama, leaning blue so it reads as daylight under the warm studio HDR
- * (Dustin, 2026-09-19; was pure white, before that brand lavender #e9d7fe).
+ * The sweep, the backdrop and the loading card share one colour: pure white.
+ * The sweep is unlit and untonemapped, so this is what reaches the screen
+ * (Dustin, 2026-09-20; earlier a lit sweep needed a blue lean to fight the
+ * warm HDR and still landed on grey).
  */
-const SMASHBAR_SWEEP='#eef3ff';
+const SMASHBAR_SWEEP='#ffffff';
 
 /**
  * The Smashbar auth-page backdrop: grape jelly alone on a white sweep, no
