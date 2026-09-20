@@ -9,14 +9,23 @@ import { bloom } from 'three/addons/tsl/display/BloomNode.js';
  * scene pass and reads back cleanly; an MSAA edge between the two blends.
  */
 export const GROUND_ALPHA=.5;
+/**
+ * The linear level an unshadowed white sweep renders at under the studio light
+ * (measured 1.34–1.39 near the character, falling toward the far floor where the
+ * grazing view reflects the darker room; set just under the minimum so the whole
+ * floor clips to white). Flagged pixels are divided by it instead of tone
+ * mapped, and the shadow keeps its full linear contrast below it — deeper than
+ * AgX showed it, which is why the sweep has its own `shadow` strength.
+ */
+export const GROUND_WHITE_LEVEL=1.28;
 
 /**
  * Linear HDR scene → restrained lens glow → filmic contrast grade → one AgX/output
  * transform. Pixels flagged as ground (see GROUND_ALPHA) skip the grade and the
- * tone mapping: their colour is taken as-is and only converted to the output
- * colour space, so an unlit white sweep is white on screen and its shadow is
- * the receiver's plain darkening. The playroom's table is lit and unflagged,
- * so it takes the full transform as before.
+ * tone mapping: their colour is exposed by GROUND_WHITE_LEVEL and only converted
+ * to the output colour space, so a white sweep is white on screen with its
+ * shadow at full contrast. The playroom's table is unflagged and takes the full
+ * transform as before.
  */
 export function createComposite(renderer:WebGPURenderer,scene:Scene,camera:PerspectiveCamera,bloomResolutionScale=.5) {
   const scenePass=pass(scene,camera);
@@ -30,7 +39,7 @@ export function createComposite(renderer:WebGPURenderer,scene:Scene,camera:Persp
   const graded=contrasted.mul(float(1).sub(vignette));
   const groundness=float(1).sub(color.a).div(1-GROUND_ALPHA).clamp(0,1);
   const sceneOut=renderOutput(vec4(graded,1));
-  const groundOut=renderOutput(vec4(color.rgb,1),NoToneMapping);
+  const groundOut=renderOutput(vec4(color.rgb.div(GROUND_WHITE_LEVEL),1),NoToneMapping);
   const pipeline=new RenderPipeline(renderer,mix(sceneOut,groundOut,groundness));
   pipeline.outputColorTransform=false;
   return {render:()=>pipeline.render(),dispose:()=>{glow.dispose();scenePass.dispose();pipeline.dispose();}};

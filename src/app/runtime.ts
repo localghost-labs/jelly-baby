@@ -45,7 +45,11 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   // gesture can unlock Web Audio even while assets and shaders are settling.
   const sound=new JellySound();
   const scene=new THREE.Scene();
-  scene.background=new THREE.Color(config.backdrop);scene.fog=new THREE.Fog(config.backdrop,2,12);
+  scene.background=new THREE.Color(config.backdrop);
+  // The table fades into the room's colour with distance. A sweep must not: its
+  // pixels are exposed for white in the composite, and fog would blend the far
+  // floor toward the backdrop's linear value first — a grey band at the top.
+  if(config.ground.kind==='table')scene.fog=new THREE.Fog(config.backdrop,2,12);
   const camera=new THREE.PerspectiveCamera(36,1,.001,40);
   camera.position.set(.111,.170,.256);
   stage('Loading the little room');
@@ -77,7 +81,7 @@ export async function startGame(stage:(s:string)=>void,fail:(e:unknown)=>void,co
   const ground:GroundSurface=table&&tableTextures
     ?table.makeTable(optics,environment,facilityShadows,caustics,tableTextures)
     :makeSweep(optics,environment,facilityShadows,caustics,config.ground.kind==='sweep'?config.ground.color:config.backdrop,
-      stainMap&&config.stain?{map:stainMap,width:config.stain.width}:undefined);
+      stainMap&&config.stain?{map:stainMap,width:config.stain.width}:undefined,config.ground.kind==='sweep'?config.ground.shadow:undefined);
   scene.add(ground.mesh);
   if(wordmark)scene.add(wordmark.group);
   const composite=createComposite(renderer,scene,camera,profile.bloomResolutionScale);

@@ -8,11 +8,12 @@ export const SOURCE_URL='https://github.com/localghost-labs/jelly-baby';
 export type GroundConfig=
   |{readonly kind:'table'}
   /**
-   * A flat unlit plane in one colour, passed through the composite without tone
-   * mapping (so white is white); with the backdrop set to the same colour the
-   * horizon disappears.
+   * A flat lit plane in one colour, exposed by the composite instead of tone
+   * mapped (so white is white); with the backdrop set to the same colour the
+   * horizon disappears. `shadow` (0–1) is how deep his shadow darkens it;
+   * absent, the light's own window fraction.
    */
-  |{readonly kind:'sweep';readonly color:string};
+  |{readonly kind:'sweep';readonly color:string;readonly shadow?:number};
 
 export type WordmarkConfig={
   /** Metres across the letters. The baby is ~7 cm. */
@@ -110,7 +111,9 @@ export const EMBED_SCENE:SceneConfig={
   mode:'embed',
   flavor:'grape',
   backdrop:SMASHBAR_SWEEP,
-  ground:{kind:'sweep',color:SMASHBAR_SWEEP},
+  // Shadow eased off: the floor no longer goes through the tone curve whose
+  // shoulder used to soften it (Dustin, 2026-09-20).
+  ground:{kind:'sweep',color:SMASHBAR_SWEEP,shadow:.55},
   playroom:false,
   portal:false,
   // No wordmark (Dustin, 2026-09-19): the jelly alone on the sweep. The

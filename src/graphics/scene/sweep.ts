@@ -41,18 +41,20 @@ export async function loadStainTexture():Promise<THREE.Texture> {
  *
  * `stain` paints the smush mark INTO the ground's albedo, in world space, at a
  * point set later (`placeStainAt`). It is the floor, not a decal on the floor:
- * one receiver, nothing to fight with, and his shadow falls on the ink for the
- * same reason it falls on the sweep.
+ * one receiver, nothing to fight with, and his shadow and caustic fall on the
+ * ink for the same reason they fall on the sweep.
  *
- * The sweep is UNLIT and flagged for the composite (alpha = GROUND_ALPHA), which
- * passes it through without tone mapping: its colour is exactly the albedo times
- * the receiver's shadow darkening, so a white sweep is white on screen, not the
- * 84 % grey a lit white lands on under AgX. The character still refracts it —
- * the transmission pass samples the ground's colour, and unlit white sits where
- * the lit sweep did in linear terms.
+ * The sweep is lit like the table — its shadow, caustic and the glossy specular
+ * that shows inside the shadow all come from the lighting model — but it flags
+ * its pixels for the composite (alpha = GROUND_ALPHA), which exposes them for a
+ * white floor instead of tone mapping them: a lit white lands on 84 % grey
+ * under AgX, and lifting it only drags the shadow into the same shoulder.
  */
-export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string,stain?:SweepStain):GroundSurface {
-  const fraction=uniform(light.windowFraction);
+export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;windowFraction:number;irradiance:number},facilities:FacilityShadows,caustics:CausticReceivers,color:string,stain?:SweepStain,shadow?:number):GroundSurface {
+  // `shadow` (0–1) fixes how deep his shadow darkens the sweep; absent, it is
+  // the light's own window fraction, as on the table. Without the tone curve's
+  // shoulder the true depth reads harder than it did, so the scene chooses.
+  const fraction=uniform(shadow??light.windowFraction);
   const tint=new THREE.Color(color);
   const sweep=vec3(tint.r,tint.g,tint.b);
   const stainCentre=uniform(new THREE.Vector2(0,0));
@@ -62,7 +64,7 @@ export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;
   const albedo=ink?mix(sweep,ink.rgb,ink.a):sweep;
   // NoBlending (not transparent, so still in the opaque pass the character
   // refracts) is what lets an opaque material write an alpha other than 1.
-  const material=new THREE.MeshBasicNodeMaterial({color,blending:THREE.NoBlending});
+  const material=new THREE.MeshPhysicalNodeMaterial({color,metalness:0,roughness:.72,clearcoat:0,blending:THREE.NoBlending});
   material.opacityNode=float(GROUND_ALPHA);
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(200,200),material);
   mesh.rotation.x=-Math.PI/2;mesh.position.y=-.00005;mesh.receiveCaustics=true;
@@ -71,7 +73,7 @@ export function makeSweep(_optics:RefractiveLightField,light:{color:THREE.Color;
   if(ink){stainSilhouette=new THREE.MeshBasicNodeMaterial({toneMapped:false});stainSilhouette.colorNode=vec3(ink.a);}
   return {
     mesh,
-    setLighting:(light:{windowFraction:number})=>{fraction.value=light.windowFraction;},
+    setLighting:(light:{windowFraction:number})=>{if(shadow===undefined)fraction.value=light.windowFraction;},
     dispose:()=>{mesh.geometry.dispose();material.dispose();stainSilhouette?.dispose();stain?.map.dispose();},
     placeStainAt:stain?(x,z)=>{stainCentre.value.set(x,z);}:undefined,
     stainSilhouette,
