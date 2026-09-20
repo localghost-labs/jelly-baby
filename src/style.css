@@ -97,6 +97,9 @@ h2{font:italic 39px Georgia,serif;letter-spacing:-1.6px;font-weight:400;margin:0
 [data-jelly-mode="embed"] kbd{border-color:#7f56d940;background:#ffffff30}
 [data-jelly-mode="embed"] .separator{background:#7f56d926}
 [data-jelly-mode="embed"] .icon-button{background:#ffffff40;border-color:#ffffff7a}
+/* The near framing is shown cropped (Smashbar's phone-width panel keeps the
+   middle band of the frame); the mute button moves down into what stays visible. */
+[data-jelly-framing="near"] .actions{top:14%}
 .source-link{pointer-events:auto;color:inherit;font-size:10px;letter-spacing:.025em;text-decoration:underline;text-underline-offset:2px}
 .source-link:hover,.source-link:focus-visible{color:#42307d}
 .actions .source-link-action{align-self:center;order:-1;margin-right:6px;color:#53389ebd}

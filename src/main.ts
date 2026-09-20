@@ -6,6 +6,8 @@ const config=resolveSceneConfig();
 // index.html sets this before its preloads. Setting it again here keeps the
 // stylesheet honest if the document is ever served without that bootstrap.
 document.documentElement.dataset.jellyMode=config.mode;
+// Near framing (the small cropped panel) keeps its chrome clear of the crop.
+document.documentElement.dataset.jellyFraming=config.cameraDistance===null?'wide':'near';
 // The page and the loading card paint in the scene's backdrop colour, so
 // nothing else shows before the canvas does.
 document.documentElement.style.setProperty('--jelly-backdrop',config.backdrop);
