@@ -147,7 +147,7 @@ export const CAPTURE_SCENE:SceneConfig={
   // Close for the landing hero, but far enough that his shadow's tip stays in
   // frame (Dustin, 2026-09-20; half the orbit max clipped it). The live embed
   // keeps its wide framing.
-  cameraDistance:.27,
+  cameraDistance:.32,
   idleHop:null,
   lifecycleMessages:false,
   pauseWhenHidden:false,
